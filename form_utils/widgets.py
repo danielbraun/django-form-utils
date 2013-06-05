@@ -15,6 +15,7 @@ from form_utils.settings import JQUERY_URL
 
 try:
     from sorl.thumbnail import get_thumbnail
+
     def thumbnail(image_path, width, height):
         geometry_string = 'x'.join([str(width), str(height)])
         t = get_thumbnail(image_path, geometry_string)
@@ -22,14 +23,16 @@ try:
 except ImportError:
     try:
         from easy_thumbnails.files import get_thumbnailer
+
         def thumbnail(image_path, width, height):
             thumbnail_options = dict(size=(width, height), crop=True)
-            thumbnail = get_thumbnailer(image_path).get_thumbnail(thumbnail_options)
+            thumbnail = get_thumbnailer(
+                image_path).get_thumbnail(thumbnail_options)
             return u'<img src="%s" alt="%s" />' % (thumbnail.url, image_path)
     except ImportError:
         def thumbnail(image_path, width, height):
-            absolute_url = posixpath.join(settings.MEDIA_URL, image_path)
-            return u'<img src="%s" alt="%s" />' % (absolute_url, image_path)
+            return u'<img src="%s" alt="%s" />' % (image_path, image_path)
+
 
 class ImageWidget(forms.FileInput):
     template = '%(input)s<br />%(image)s'
@@ -44,12 +47,13 @@ class ImageWidget(forms.FileInput):
     def render(self, name, value, attrs=None):
         input_html = super(forms.FileInput, self).render(name, value, attrs)
         if hasattr(value, 'width') and hasattr(value, 'height'):
-            image_html = thumbnail(value.name, self.width, self.height)
+            image_html = thumbnail(value.url, self.width, self.height)
             output = self.template % {'input': input_html,
                                       'image': image_html}
         else:
             output = input_html
         return mark_safe(output)
+
 
 class ClearableFileInput(forms.MultiWidget):
     default_file_widget_class = forms.FileInput
@@ -83,7 +87,9 @@ class ClearableFileInput(forms.MultiWidget):
 
 root = lambda path: posixpath.join(settings.STATIC_URL, path)
 
+
 class AutoResizeTextarea(forms.Textarea):
+
     """
     A Textarea widget that automatically resizes to accomodate its contents.
 
@@ -104,7 +110,9 @@ class AutoResizeTextarea(forms.Textarea):
         attrs.setdefault('rows', 5)
         super(AutoResizeTextarea, self).__init__(*args, **kwargs)
 
+
 class InlineAutoResizeTextarea(AutoResizeTextarea):
+
     def __init__(self, *args, **kwargs):
         attrs = kwargs.setdefault('attrs', {})
         try:
@@ -114,4 +122,3 @@ class InlineAutoResizeTextarea(AutoResizeTextarea):
         attrs.setdefault('cols', 40)
         attrs.setdefault('rows', 2)
         super(InlineAutoResizeTextarea, self).__init__(*args, **kwargs)
-
